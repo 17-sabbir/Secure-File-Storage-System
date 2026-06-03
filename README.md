@@ -1,6 +1,6 @@
 # Secure File Storage System
 
-<img src="public/images/cryptologo.png" alt="Secure File Storage" width="250" height="200" style="display: block; margin: 0 auto;">
+<img src="public/cryptologo.png" alt="Secure File Storage" width="250" height="200" style="display: block; margin: 0 auto;">
 
 A secure file storage system for uploading, managing, and sharing files safely.
 
