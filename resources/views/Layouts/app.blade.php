@@ -1192,7 +1192,7 @@ if (document.readyState !== 'loading') {
     }
 }
 
-// Key character counter (AES: 16, DES: 8)
+// Key character counter (AES: 5-20, DES: 3-20)
 const updateKeyUI = (input) => {
     const form = input.closest('form');
     const algoSelect = form?.querySelector('select[name="algorithm"]');
@@ -1202,13 +1202,14 @@ const updateKeyUI = (input) => {
     if (!counter || !label) return;
 
     const algo = algoSelect?.value || 'AES';
-    const requiredLength = algo === 'DES' ? 8 : 16;
-    if (input.value.length > requiredLength) {
-        input.value = input.value.slice(0, requiredLength);
+    const minLength = algo === 'DES' ? 3 : 5;
+    const maxLength = 20;
+    if (input.value.length > maxLength) {
+        input.value = input.value.slice(0, maxLength);
     }
 
     const requiredSpan = label.querySelector('span');
-    label.textContent = requiredLength + '-Character Secret Key ';
+    label.textContent = minLength + '-' + maxLength + ' Character Secret Key ';
     if (requiredSpan) {
         label.appendChild(requiredSpan);
     } else {
@@ -1218,12 +1219,12 @@ const updateKeyUI = (input) => {
         label.appendChild(span);
     }
 
-    input.setAttribute('maxlength', String(requiredLength));
-    input.setAttribute('placeholder', 'Enter a ' + requiredLength + '-character key');
+    input.setAttribute('maxlength', String(maxLength));
+    input.setAttribute('placeholder', 'Enter a ' + minLength + '-' + maxLength + ' character key');
 
     const n = input.value.length;
-    counter.textContent = n + ' / ' + requiredLength + ' characters';
-    counter.className = 'key-counter ' + (n === requiredLength ? 'ok' : 'bad');
+    counter.textContent = n + ' / ' + minLength + '-' + maxLength + ' characters';
+    counter.className = 'key-counter ' + (n >= minLength && n <= maxLength ? 'ok' : 'bad');
 };
 
 document.querySelectorAll('.key-input').forEach(input => {

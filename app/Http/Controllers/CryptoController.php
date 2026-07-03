@@ -50,10 +50,11 @@ class CryptoController extends Controller
 
         $key  = $request->input('key');
         $algo = $request->input('algorithm');
-        $expectedLength = $algo === 'DES' ? 8 : 16;
-        if (strlen($key) !== $expectedLength) {
+        $minLength = $algo === 'DES' ? 3 : 5;
+        $maxLength = 20;
+        if (strlen($key) < $minLength || strlen($key) > $maxLength) {
             return back()
-                ->withErrors(['key' => "Key must be {$expectedLength} characters for {$algo}."])
+                ->withErrors(['key' => "Key must be between {$minLength} and {$maxLength} characters for {$algo}."])
                 ->withInput();
         }
 
@@ -98,10 +99,11 @@ class CryptoController extends Controller
 
         $key  = $request->input('key');
         $algo = $request->input('algorithm');
-        $expectedLength = $algo === 'DES' ? 8 : 16;
-        if (strlen($key) !== $expectedLength) {
+        $minLength = $algo === 'DES' ? 3 : 5;
+        $maxLength = 20;
+        if (strlen($key) < $minLength || strlen($key) > $maxLength) {
             return back()
-                ->withErrors(['key' => "Key must be {$expectedLength} characters for {$algo}."])
+                ->withErrors(['key' => "Key must be between {$minLength} and {$maxLength} characters for {$algo}."])
                 ->withInput();
         }
 
@@ -202,19 +204,22 @@ class CryptoController extends Controller
     /**
      * AES-128-CBC or DES-CBC encrypt/decrypt via OpenSSL
      *
-     * The Java project uses a custom AES with CBC and PKCS7 padding,
-     * and the 16-character key directly (AES-128).
-     * DES requires 8-byte key — we use the first 8 chars of the 16-char key.
+     * The Java project uses a custom AES with CBC and PKCS7 padding.
+     * Since the user-supplied password/key can now be any length (5-20
+     * chars for AES, 3-20 for DES), we derive a fixed-size cipher key by
+     * SHA-256 hashing the raw password and taking the required number of
+     * leading bytes: 16 bytes for AES-128, 8 bytes for DES.
      */
     private function cryptoProcess(string $data, string $key, string $algo, string $mode): string
     {
+        $hash = hash('sha256', $key, true); // 32 raw bytes
+
         if ($algo === 'AES') {
-            $cipher = 'AES-128-CBC';
-            $keyBytes = $key; // 16 bytes = AES-128
+            $cipher   = 'AES-128-CBC';
+            $keyBytes = substr($hash, 0, 16); // 16 bytes = AES-128
         } else {
-            // DES uses 8-byte key; take first 8 chars of the 16-char key
             $cipher   = 'DES-CBC';
-            $keyBytes = substr($key, 0, 8);
+            $keyBytes = substr($hash, 0, 8); // 8 bytes = DES
         }
 
         // Fixed IV (16 zero bytes for AES, 8 for DES) — matches Java's behaviour

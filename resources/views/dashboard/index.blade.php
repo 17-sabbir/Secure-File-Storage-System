@@ -31,15 +31,15 @@
                         <label>Choose Algorithm</label>
                         <select name="algorithm">
                             <option value="AES">AES-128 (Recommended)</option>
-                            <option value="DES">DES (8-character key)</option>
+                            <option value="DES">DES (3-20 character key)</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>16-Character Secret Key <span style="color:var(--danger)">*</span></label>
+                        <label>5-20 Character Secret Key <span style="color:var(--danger)">*</span></label>
                         <input type="text" name="key" class="key-input"
-                               placeholder="Enter a 16-character key"
-                               maxlength="16" autocomplete="off" required>
-                        <div class="key-counter bad">0 / 16 characters</div>
+                               placeholder="Enter a 5-20 character key"
+                               maxlength="20" autocomplete="off" required>
+                        <div class="key-counter bad">0 / 5-20 characters</div>
                     </div>
                     <div class="form-group">
                         <label>Choose File</label>
@@ -75,11 +75,11 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>16-Character Secret Key <span style="color:var(--danger)">*</span></label>
+                        <label>5-20 Character Secret Key <span style="color:var(--danger)">*</span></label>
                         <input type="text" name="key" class="key-input"
                                placeholder="Use the same key used for encryption"
-                               maxlength="16" autocomplete="off" required>
-                        <div class="key-counter bad">0 / 16 characters</div>
+                               maxlength="20" autocomplete="off" required>
+                        <div class="key-counter bad">0 / 5-20 characters</div>
                     </div>
                     <div class="form-group">
                         <label>Encrypted File (.enc)</label>
