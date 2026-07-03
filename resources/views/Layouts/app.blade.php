@@ -1117,6 +1117,100 @@
                 font-size: 0.9rem;
             }
         }
+
+        /* Share Modal (used by the file sharing feature) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.modal-open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        .modal-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-wrap: anywhere;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 1.1rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            padding: 4px 8px;
+        }
+
+        .modal-close-btn:hover {
+            color: var(--danger);
+        }
+
+        .share-recipients {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .share-recipients-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .share-recipient-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .share-recipient-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Toast used for share success/error feedback */
+        .share-toast {
+            position: fixed;
+            top: 90px;
+            right: 24px;
+            z-index: 300;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>

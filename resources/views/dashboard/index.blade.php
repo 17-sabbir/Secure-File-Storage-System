@@ -187,14 +187,25 @@
                                 <td style="color:var(--muted)">{{ number_format($file->file_size / 1024, 1) }} KB</td>
                                 <td style="color:var(--muted)">{{ $file->created_at->format('d M Y') }}</td>
                                 <td style="display:flex; gap:6px; flex-wrap:wrap;">
-                                    <a href="{{ $file->download_route }}" class="btn btn-outline btn-sm">
+                                    <a href="{{ $file->download_route }}" class="btn btn-outline btn-sm" title="Download">
                                         <i class="fas fa-download"></i>
                                     </a>
+                                    @if($file->type === 'decrypted')
+                                        <a href="{{ $file->open_route }}" target="_blank" class="btn btn-outline btn-sm" title="Open">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    @endif
+                                    @if($file->type === 'encrypted')
+                                        <button type="button" class="btn btn-outline btn-sm share-open-btn" title="Share"
+                                                data-modal-target="shareModal-{{ $file->id }}">
+                                            <i class="fas fa-share-nodes"></i>
+                                        </button>
+                                    @endif
                                     <form method="POST" action="{{ $file->delete_route }}" class="delete-form"
                                           onsubmit="return confirm('Delete this file?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -206,8 +217,121 @@
                 </div>
             @endif
         </div>
+
+        {{-- Shared With You --}}
+        <div class="table-card">
+            <div class="table-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fas fa-people-arrows" style="color: var(--accent); font-size: 1.2rem;"></i>
+                    <span class="table-title">Shared With You</span>
+                    <span class="file-count">{{ count($sharedWithMe) }}</span>
+                </div>
+            </div>
+
+            @if($sharedWithMe->isEmpty())
+                <div class="text-center text-muted" style="padding: 40px 20px;">
+                    <i class="fas fa-inbox" style="font-size:2.5rem; margin-bottom:12px; display:block; opacity:.3"></i>
+                    <div style="font-size: 0.9rem;">No files have been shared with you yet.</div>
+                </div>
+            @else
+                <div class="table-wrapper">
+                    <table class="files-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>File Name</th>
+                                <th>Algorithm</th>
+                                <th>Shared By</th>
+                                <th>Date</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($sharedWithMe as $i => $share)
+                            <tr>
+                                <td style="color:var(--muted); font-weight: 600;">{{ $i + 1 }}</td>
+                                <td>
+                                    <div class="file-name-cell">
+                                        <i class="fas fa-file" style="color:var(--accent); margin-right:6px"></i>
+                                        {{ $share->encryptedFile->original_name }}
+                                        <i class="fas fa-lock" style="color: var(--success); margin-left: 8px;" title="Encrypted"></i>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge {{ $share->encryptedFile->algorithm === 'AES' ? 'badge-aes' : 'badge-des' }}">
+                                        {{ $share->encryptedFile->algorithm }}
+                                    </span>
+                                </td>
+                                <td style="color:var(--muted)">{{ $share->sharedBy->email }}</td>
+                                <td style="color:var(--muted)">{{ $share->created_at->format('d M Y') }}</td>
+                                <td style="display:flex; gap:6px; flex-wrap:wrap;">
+                                    <a href="{{ route('download.encrypted', $share->encryptedFile) }}" class="btn btn-outline btn-sm" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-muted" style="padding: 12px 4px 0; font-size: 0.8rem;">
+                    <i class="fas fa-circle-info"></i> Download the file, then use the Decrypt form with the algorithm and key the sender gives you.
+                </div>
+            @endif
+        </div>
     </div>
 </div>
+
+{{-- Share Modals (one per encrypted file) --}}
+@foreach($files as $file)
+    @if($file->type === 'encrypted')
+        <div class="modal-overlay" id="shareModal-{{ $file->id }}">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <div class="modal-title"><i class="fas fa-share-nodes"></i> Share "{{ $file->original_name }}"</div>
+                    <button type="button" class="modal-close-btn" data-modal-close="shareModal-{{ $file->id }}">
+                        <i class="fas fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form method="POST" action="{{ $file->share_route }}">
+                    @csrf
+                    <div class="form-group">
+                        <label>Recipient's Account Email</label>
+                        <input type="email" name="email" placeholder="user@example.com" required autocomplete="off"
+                               value="{{ old('_share_file_id') == $file->id ? old('email') : '' }}">
+                        @if($errors->share->has('email') && old('_share_file_id') == $file->id)
+                            <div class="error-message"><i class="fas fa-exclamation-circle"></i> {{ $errors->share->first('email') }}</div>
+                        @endif
+                        <input type="hidden" name="_share_file_id" value="{{ $file->id }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-large" style="width:100%">
+                        <i class="fas fa-paper-plane"></i> Share File
+                    </button>
+                </form>
+
+                @if($file->shares->isNotEmpty())
+                    <div class="share-recipients">
+                        <div class="share-recipients-title">Already shared with</div>
+                        @foreach($file->shares as $share)
+                            <div class="share-recipient-row">
+                                <span><i class="fas fa-user" style="color:var(--muted); margin-right:6px"></i>{{ $share->sharedWith->email }}</span>
+                                <form method="POST" action="{{ route('file.share.revoke', $share) }}"
+                                      onsubmit="return confirm('Revoke access for {{ $share->sharedWith->email }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Revoke">
+                                        <i class="fas fa-xmark"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
+@endforeach
 
     <script>
         // Show success message based on session
@@ -341,6 +465,54 @@
             e.preventDefault();
             e.stopPropagation();
         });
+
+        // Share modal open/close
+        function openShareModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.add('modal-open');
+        }
+        function closeShareModal(id) {
+            const modal = document.getElementById(id);
+            if (modal) modal.classList.remove('modal-open');
+        }
+
+        document.querySelectorAll('.share-open-btn').forEach(btn => {
+            btn.addEventListener('click', () => openShareModal(btn.getAttribute('data-modal-target')));
+        });
+
+        document.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => closeShareModal(btn.getAttribute('data-modal-close')));
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('modal-open');
+            });
+        });
+
+        @if(session('success') === 'share-success')
+            (function() {
+                const toast = document.createElement('div');
+                toast.className = 'success-message share-toast';
+                toast.innerHTML = '<i class="fas fa-check-circle"></i> File shared successfully.';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 5000);
+            })();
+        @endif
+
+        @if($errors->share->any())
+            (function() {
+                const toast = document.createElement('div');
+                toast.className = 'error-message share-toast';
+                toast.innerHTML = '<i class="fas fa-exclamation-circle"></i> {{ $errors->share->first('email') }}';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 5000);
+            })();
+        @endif
+
+        @if($errors->share->any())
+            openShareModal('shareModal-{{ old('_share_file_id') }}');
+        @endif
     </script>
 
 </div>

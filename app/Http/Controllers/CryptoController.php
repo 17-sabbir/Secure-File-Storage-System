@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\DecryptedFile;
 use App\Models\EncryptedFile;
+use App\Models\FileShare;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
@@ -16,11 +18,12 @@ class CryptoController extends Controller
     public function dashboard()
     {
         $userId = Session::get('user_id');
-        $encryptedFiles = EncryptedFile::where('user_id', $userId)->get();
+        $encryptedFiles = EncryptedFile::where('user_id', $userId)->with('shares.sharedWith')->get();
         $encryptedFiles->each(function ($file) {
             $file->setAttribute('type', 'encrypted');
             $file->setAttribute('download_route', route('download.encrypted', $file));
             $file->setAttribute('delete_route', route('file.delete.encrypted', $file));
+            $file->setAttribute('share_route', route('file.share', $file));
         });
 
         $decryptedFiles = DecryptedFile::where('user_id', $userId)->get();
@@ -28,13 +31,23 @@ class CryptoController extends Controller
             $file->setAttribute('type', 'decrypted');
             $file->setAttribute('download_route', route('download.decrypted', $file));
             $file->setAttribute('delete_route', route('file.delete.decrypted', $file));
+            $file->setAttribute('open_route', route('open.decrypted', $file));
         });
 
         $files = $encryptedFiles
             ->concat($decryptedFiles)
             ->sortByDesc('created_at')
             ->values();
-        return view('dashboard.index', compact('files'));
+
+        // Encrypted files that other registered users have shared with the current user
+        $sharedWithMe = FileShare::where('shared_with_user_id', $userId)
+            ->whereHas('encryptedFile')
+            ->with(['encryptedFile', 'sharedBy'])
+            ->get()
+            ->sortByDesc('created_at')
+            ->values();
+
+        return view('dashboard.index', compact('files', 'sharedWithMe'));
     }
 
     /**
@@ -141,11 +154,22 @@ class CryptoController extends Controller
      */
     public function downloadEncrypted(EncryptedFile $file)
     {
-        return $this->downloadStoredFile(
-            $file,
-            'encrypted',
-            $file->original_name . '.enc'
-        );
+        $userId = Session::get('user_id');
+        $isOwner = $file->user_id === $userId;
+        $isSharedWithMe = $isOwner ? false : FileShare::where('encrypted_file_id', $file->id)
+            ->where('shared_with_user_id', $userId)
+            ->exists();
+
+        if (!$isOwner && !$isSharedWithMe) {
+            abort(403);
+        }
+
+        $path = storage_path('encrypted/' . $file->stored_name);
+        if (!file_exists($path)) {
+            return back()->withErrors(['file' => 'File not found.']);
+        }
+
+        return response()->download($path, $file->original_name . '.enc');
     }
 
     public function downloadDecrypted(DecryptedFile $file)
@@ -155,6 +179,84 @@ class CryptoController extends Controller
             'decrypted',
             $file->original_name
         );
+    }
+
+    /**
+     * Open a decrypted file directly in the browser (inline) instead of
+     * forcing a download, so it can be previewed when the file type
+     * supports it (images, PDFs, text, etc.)
+     */
+    public function openDecrypted(DecryptedFile $file)
+    {
+        if ($file->user_id !== Session::get('user_id')) {
+            abort(403);
+        }
+
+        $path = storage_path('decrypted/' . $file->stored_name);
+        if (!file_exists($path)) {
+            return back()->withErrors(['file' => 'File not found.']);
+        }
+
+        return response()->file($path, [
+            'Content-Disposition' => 'inline; filename="' . $file->original_name . '"',
+        ]);
+    }
+
+    /**
+     * Share an encrypted file with another registered user (by email).
+     * The encryption key itself is never stored or shared here — the
+     * recipient must still receive the key through a separate channel,
+     * exactly as the sender needed one to encrypt the file in the first place.
+     */
+    public function share(Request $request, EncryptedFile $file)
+    {
+        if ($file->user_id !== Session::get('user_id')) {
+            abort(403);
+        }
+
+        $request->validateWithBag('share', [
+            'email' => 'required|email',
+        ]);
+
+        $recipient = User::where('email', $request->input('email'))->first();
+
+        if (!$recipient) {
+            return back()->withErrors(['email' => 'No account found with that email.'], 'share')->withInput();
+        }
+
+        if ($recipient->id === $file->user_id) {
+            return back()->withErrors(['email' => 'You cannot share a file with yourself.'], 'share')->withInput();
+        }
+
+        $alreadyShared = FileShare::where('encrypted_file_id', $file->id)
+            ->where('shared_with_user_id', $recipient->id)
+            ->exists();
+
+        if ($alreadyShared) {
+            return back()->withErrors(['email' => 'This file is already shared with that user.'], 'share')->withInput();
+        }
+
+        FileShare::create([
+            'encrypted_file_id'   => $file->id,
+            'shared_by_user_id'   => Session::get('user_id'),
+            'shared_with_user_id' => $recipient->id,
+        ]);
+
+        return back()->with('success', 'share-success');
+    }
+
+    /**
+     * Revoke a previously granted share.
+     */
+    public function unshare(FileShare $share)
+    {
+        if ($share->shared_by_user_id !== Session::get('user_id')) {
+            abort(403);
+        }
+
+        $share->delete();
+
+        return back()->with('success', 'Access revoked successfully.');
     }
 
     /**
