@@ -1215,13 +1215,19 @@
 </head>
 <body>
 
-@if(request()->routeIs('dashboard') || request()->routeIs('encrypt') || request()->routeIs('decrypt') || request()->routeIs('download') || request()->routeIs('file.delete'))
+@if(request()->routeIs('dashboard') || request()->routeIs('encrypt') || request()->routeIs('decrypt') || request()->routeIs('download') || request()->routeIs('file.delete') || request()->routeIs('chat.*'))
 <nav>
     <div class="nav-brand">
           <img src="{{ asset('cryptologo.png') }}" alt="Secure File Storage" style="max-width: 40px; margin-bottom: 3px;">
         Secure File Storage System
     </div>
     <div class="nav-right">
+        <a href="{{ route('dashboard') }}" class="btn btn-outline btn-sm {{ request()->routeIs('dashboard') ? 'op-btn-main-active' : '' }}">
+            <i class="fas fa-lock"></i> Files
+        </a>
+        <a href="{{ route('chat.index') }}" class="btn btn-outline btn-sm {{ request()->routeIs('chat.*') ? 'op-btn-main-active' : '' }}">
+            <i class="fas fa-comments"></i> Chat
+        </a>
         <span class="nav-email"><i class="fas fa-user"></i> {{ session('user_email') }}</span>
         <button id="themeToggleBtn" class="btn btn-outline btn-sm theme-toggle-btn" title="Toggle Dark/Light Mode">
             <i class="fas fa-moon"></i>

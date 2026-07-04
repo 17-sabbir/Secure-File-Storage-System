@@ -9,8 +9,13 @@ A secure file storage system for uploading, managing, and sharing files safely.
 ## 🚀 Features
 
 - Secure user authentication with SHA-512 password hashing
+- Two-Factor Authentication (email OTP) during login
+- Password strength checker with real-time feedback during registration
+- End-to-end encrypted user chat (client-side encryption)
 - File upload, download, and management
 - File encryption and secure storage
+- Share encrypted files with other registered users by email
+- Revoke shared access from the dashboard
 - User-friendly dashboard
 
 ---
@@ -73,14 +78,18 @@ Open your browser and go to: **http://localhost:8000**
 1. **Register** - Create a new account with email and password
 2. **Login** - Sign in with your credentials
 3. **Upload** - Upload files to your secure storage
-4. **Manage** - Download, view, or delete your files
-5. **Logout** - End your session
+4. **Share** - Open the dashboard and share an encrypted file with another registered user by email
+5. **Manage** - Download, view, delete, or revoke shared access from the dashboard
+6. **Logout** - End your session
 
 ---
 
 ## 🔐 Security
 
-- SHA-512 password hashing with bcrypt
+- SHA-512 password hashing
+- Email-based 2FA for login verification
+- Password strength scoring and weak-password feedback
+- Browser-side end-to-end encryption for chat messages
 - CSRF protection
 - Input validation
 - Encrypted file storage
