@@ -30,7 +30,7 @@
                     <div class="form-group">
                         <label>Choose Algorithm</label>
                         <select name="algorithm">
-                            <option value="AES">AES-128 (Recommended)</option>
+                            <option value="AES">AES (Recommended)</option>
                             <option value="DES">DES (3-20 character key)</option>
                         </select>
                     </div>
@@ -70,7 +70,7 @@
                     <div class="form-group">
                         <label>Choose Algorithm</label>
                         <select name="algorithm">
-                            <option value="AES">AES-128</option>
+                            <option value="AES">AES (Recommended)</option>
                             <option value="DES">DES</option>
                         </select>
                     </div>

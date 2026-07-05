@@ -25,7 +25,12 @@
             </div>
             <div class="form-group">
                 <label><i class="fas fa-lock"></i> Password</label>
-                <input type="password" name="password" id="passwordInput" placeholder="Enter a password" required autocomplete="new-password">
+                <div style="position:relative;">
+                    <input type="password" name="password" id="passwordInput" placeholder="Enter a password" required autocomplete="new-password" style="padding-right:48px;">
+                    <button type="button" id="toggleRegisterPassword" aria-label="Show password" aria-pressed="false" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--muted); cursor:pointer; padding:6px;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
 
                 <div id="strengthMeterWrap" style="margin-top:10px; display:none;">
                     <div style="height:6px; border-radius:4px; background:var(--border); overflow:hidden;">
@@ -40,7 +45,12 @@
             </div>
             <div class="form-group">
                 <label><i class="fas fa-check-double"></i> Confirm Password</label>
-                <input type="password" name="password_confirmation" placeholder="Re-enter password" required autocomplete="new-password">
+                <div style="position:relative;">
+                    <input type="password" name="password_confirmation" id="passwordConfirmationInput" placeholder="Re-enter password" required autocomplete="new-password" style="padding-right:48px;">
+                    <button type="button" id="toggleConfirmPassword" aria-label="Show confirm password" aria-pressed="false" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); border:none; background:transparent; color:var(--muted); cursor:pointer; padding:6px;">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding:12px;">
                 <i class="fas fa-user-plus"></i> Register
@@ -50,6 +60,11 @@
         <script>
         (function () {
             const input       = document.getElementById('passwordInput');
+            const confirmInput = document.getElementById('passwordConfirmationInput');
+            const togglePassword = document.getElementById('toggleRegisterPassword');
+            const toggleConfirm = document.getElementById('toggleConfirmPassword');
+            const passwordIcon = togglePassword.querySelector('i');
+            const confirmIcon = toggleConfirm.querySelector('i');
             const wrap        = document.getElementById('strengthMeterWrap');
             const bar         = document.getElementById('strengthBar');
             const label       = document.getElementById('strengthLabel');
@@ -59,6 +74,22 @@
             const colors = { empty: '#94a3b8', weak: '#ef4444', fair: '#f59e0b', good: '#3b82f6', strong: '#22c55e' };
 
             let debounceTimer = null;
+
+            togglePassword.addEventListener('click', () => {
+                const isHidden = input.type === 'password';
+                input.type = isHidden ? 'text' : 'password';
+                togglePassword.setAttribute('aria-pressed', String(isHidden));
+                togglePassword.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+                passwordIcon.className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+            });
+
+            toggleConfirm.addEventListener('click', () => {
+                const isHidden = confirmInput.type === 'password';
+                confirmInput.type = isHidden ? 'text' : 'password';
+                toggleConfirm.setAttribute('aria-pressed', String(isHidden));
+                toggleConfirm.setAttribute('aria-label', isHidden ? 'Hide confirm password' : 'Show confirm password');
+                confirmIcon.className = isHidden ? 'fas fa-eye-slash' : 'fas fa-eye';
+            });
 
             input.addEventListener('input', () => {
                 const value = input.value;

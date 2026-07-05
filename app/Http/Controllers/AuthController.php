@@ -106,7 +106,7 @@ class AuthController extends Controller
         }
 
         $attempts = (int) Session::get('2fa_attempts', 0);
-        if ($attempts >= 5) {
+        if ($attempts >= 2) {
             Session::forget(['2fa_user_id', '2fa_attempts', '2fa_last_sent_at']);
 
             return redirect()->route('login')->withErrors(['auth' => 'Too many invalid verification attempts. Please login again.']);
@@ -146,7 +146,7 @@ class AuthController extends Controller
         }
 
         $lastSent = Session::get('2fa_last_sent_at');
-        if ($lastSent && Carbon::parse($lastSent)->addMinutes(2)->isFuture()) {
+        if ($lastSent && Carbon::parse($lastSent)->addMinutes(720)->isFuture()) {
             return back()->withErrors(['code' => 'Please wait at least 2 minutes before requesting a new code.']);
         }
 

@@ -6,7 +6,7 @@ use App\Models\ChatMessage;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
-
+   
 class ChatController extends Controller
 {
     private function me(): User
